@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blissboard — Material You Keyboard</title>
+<meta name="theme-color" content="#0b1520">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: { fontFamily: { sans: ['Nunito','sans-serif'] } } } }
+</script>
+<style>
+  /* Flat Material You palette: deep blue, cyan/teal, a hint of soft green. No gradients, no glow. */
+  :root {
+    --bg:#0b1520; --s1:#10202f; --s2:#162a3d; --s3:#1d3550;
+    --text:#e1e9f0; --muted:#a9b8c6;
+    --primary:#4fd8eb; --onprimary:#00363d; --container:#004f58; --oc:#97f0ff;
+    --blue:#a8c8ff; --green:#a6d8b8; --green-c:#1f4a3d;
+    --spring:cubic-bezier(.34,1.56,.64,1); --smooth:cubic-bezier(.2,.8,.2,1);
+  }
+  *, button, input { font-family:'Nunito',sans-serif; }
+  html { scroll-behavior:smooth; }
+  body { background:var(--bg); color:var(--text); overflow-x:hidden; }
+  ::selection { background:var(--primary); color:var(--onprimary); }
+
+  /* Independent drifting background shapes (never touch each other) */
+  #bg { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  #bg svg { position:absolute; left:0; top:0; will-change:transform; }
+  header, main, footer { position:relative; z-index:10; }
+
+  /* No default focus rings / tap flashes — shapes never snap to squares */
+  a, button, li, [role="option"] { outline:none !important; -webkit-tap-highlight-color:transparent; }
+  a:focus, button:focus, a:focus-visible, button:focus-visible, a:active, button:active { outline:none !important; box-shadow:none; }
+  button { -webkit-appearance:none; appearance:none; background-clip:padding-box; }
+
+  .btn { position:relative; overflow:hidden; font-weight:800; cursor:pointer; border:0; text-decoration:none; outline:none;
+         isolation:isolate;
+         transition:transform .55s var(--spring), border-radius .55s var(--spring), background-color .4s, color .4s; }
+  @media (hover:hover) { .btn:hover { transform:translateY(-2px) scale(1.04); } }
+  .btn:active { transform:scale(.94); }
+  .pill, .pill:hover, .pill:active, .pill:focus { border-radius:999px; }
+  .leaf { border-radius:28px 8px 28px 8px; }
+  @media (hover:hover) { .leaf:hover { border-radius:8px 28px 8px 28px; } }
+  .leaf:active { border-radius:28px 8px 28px 8px; }
+  .round, .round:hover, .round:active { border-radius:50%; }
+  .sq, .sq:hover, .sq:active { border-radius:18px; }
+
+  /* Frosted glass: semi-transparent solid tones + backdrop blur (no gradients) */
+  .glass { background:rgba(22,42,61,.62); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
+  .panel { background:rgba(16,32,47,.5); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  .btn-primary { background:var(--primary); color:var(--onprimary); }
+  .btn-tonal { background:var(--container); color:var(--oc); }
+  .ripple-dot { position:absolute; border-radius:50%; background:currentColor; opacity:.28; transform:scale(0); animation:rip .8s var(--smooth) forwards; pointer-events:none; }
+  @keyframes rip { to { transform:scale(4); opacity:0; } }
+
+  .surface { background:rgba(16,32,47,.72); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
+  .card { background:rgba(22,42,61,.68); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); border-radius:32px; transition:transform .6s var(--spring), border-radius .6s var(--spring), background-color .4s; }
+  @media (hover:hover) { .card:hover { transform:translateY(-6px); background:rgba(29,53,80,.82); border-radius:44px 32px 44px 32px; } }
+  .cookie { transition:transform .8s var(--spring); }
+  .card:hover .cookie, .cookie:hover { transform:rotate(30deg) scale(1.08); }
+  .ic-cyan { background:var(--primary); color:var(--onprimary); }
+  .ic-blue { background:var(--blue); color:#06285a; }
+  .ic-green { background:var(--green); color:#0b3a23; }
+
+  .reveal { opacity:0; transform:translateY(40px) scale(.97); transition:opacity .8s var(--smooth), transform 1s var(--spring); }
+  .reveal-left { transform:translateX(-56px); } .reveal-right { transform:translateX(56px); }
+  .reveal.in { opacity:1; transform:none; }
+  .hero-in > * { opacity:0; transform:translateY(24px); animation:heroIn .9s var(--spring) forwards; }
+  .hero-in > *:nth-child(1){animation-delay:.05s} .hero-in > *:nth-child(2){animation-delay:.15s}
+  .hero-in > *:nth-child(3){animation-delay:.25s} .hero-in > *:nth-child(4){animation-delay:.35s}
+  @keyframes heroIn { to { opacity:1; transform:none; } }
+
+  [data-i18n] { transition:opacity .22s ease, transform .3s var(--smooth), filter .22s; }
+  span[data-i18n] { display:inline-block; }
+  [data-i18n].i-out { opacity:0; transform:translateY(8px); filter:blur(3px); }
+
+  .menu { transform-origin:top right; transform:scale(.8) translateY(-8px); opacity:0; pointer-events:none; transition:transform .5s var(--spring), opacity .2s; }
+  .menu.open { transform:none; opacity:1; pointer-events:auto; }
+  .lang-opt { transition:background-color .25s, transform .4s var(--spring); }
+  .lang-opt:hover { background:var(--s3); transform:translateX(4px); }
+  .lang-opt[aria-selected="true"] { background:var(--container); color:var(--oc); }
+  .nav-link { transition:background-color .3s, color .3s, border-radius .4s var(--spring); }
+  .nav-link:hover { background:var(--s3); color:var(--text); }
+  .nav-link { border-radius:999px; }
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important;} .reveal,.hero-in>*{opacity:1;transform:none;} }
+</style>
+</head>
+<body class="font-sans antialiased">
+
+<!-- Blissboard app icon: flat cyan 12-lobe cookie + dark teal keyboard -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="bb-logo" viewBox="0 0 100 100">
+      <path id="bbCookie" d="" fill="#4fd8eb"/>
+      <rect x="27.2" y="35.5" width="45.6" height="30" rx="7.5" fill="none" stroke="#00363d" stroke-width="3.9"/>
+      <g fill="#00363d">
+        <rect x="32.6" y="41.1" width="4.8" height="4.8" rx="1.4"/><rect x="40.2" y="41.1" width="4.8" height="4.8" rx="1.4"/><rect x="47.8" y="41.1" width="4.8" height="4.8" rx="1.4"/><rect x="55.4" y="41.1" width="4.8" height="4.8" rx="1.4"/><rect x="63" y="41.1" width="4.8" height="4.8" rx="1.4"/>
+        <rect x="32.6" y="47.6" width="4.8" height="4.8" rx="1.4"/><rect x="40.2" y="47.6" width="4.8" height="4.8" rx="1.4"/><rect x="47.8" y="47.6" width="4.8" height="4.8" rx="1.4"/><rect x="55.4" y="47.6" width="4.8" height="4.8" rx="1.4"/><rect x="63" y="47.6" width="4.8" height="4.8" rx="1.4"/>
+        <rect x="39.8" y="54.4" width="20.4" height="4.2" rx="2.1"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<div id="bg" aria-hidden="true"></div>
+
+<!-- Header -->
+<header style="position:fixed" class="top-3 inset-x-3 z-50">
+  <div class="surface mx-auto max-w-6xl rounded-full pl-3 pr-2 py-2 flex items-center justify-between gap-2">
+    <a href="#top" class="flex items-center gap-2.5 font-black text-lg tracking-tight">
+      <span class="cookie block w-11 h-11"><svg class="w-full h-full" viewBox="0 0 100 100"><use href="#bb-logo"/></svg></span>
+      Blissboard
+    </a>
+    <nav class="hidden md:flex items-center gap-1 text-sm font-bold" style="color:var(--muted)">
+      <a href="#features" class="nav-link px-4 py-2 rounded-full"><span data-i18n="nav_features">Features</span></a>
+      <a href="#download" class="nav-link px-4 py-2 rounded-full"><span data-i18n="nav_download">Download</span></a>
+      <a href="#community" class="nav-link px-4 py-2 rounded-full"><span data-i18n="nav_community">Community</span></a>
+    </nav>
+    <div class="flex items-center gap-2">
+      <div class="relative">
+        <button id="langBtn" class="btn btn-tonal pill flex items-center gap-1.5 px-4 py-2.5 text-sm" aria-haspopup="listbox" aria-expanded="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg>
+          <span id="langCur">EN</span>
+          <svg id="langArrow" style="transition:transform .5s var(--spring)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <ul id="langMenu" role="listbox" class="menu absolute right-0 mt-2 w-48 rounded-[28px] p-2" style="background:rgba(22,42,61,.88);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)">
+          <li role="option" data-lang="en" class="lang-opt flex justify-between items-center px-4 py-3 rounded-[20px] cursor-pointer text-sm font-bold">English <b>EN</b></li>
+          <li role="option" data-lang="ru" class="lang-opt flex justify-between items-center px-4 py-3 rounded-[20px] cursor-pointer text-sm font-bold">Русский <b>RU</b></li>
+          <li role="option" data-lang="kz" class="lang-opt flex justify-between items-center px-4 py-3 rounded-[20px] cursor-pointer text-sm font-bold">Қазақша <b>KZ</b></li>
+        </ul>
+      </div>
+      <a href="#download" class="btn btn-primary ripple pill px-5 py-2.5 text-sm whitespace-nowrap"><span data-i18n="cta_apk">Download APK</span></a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<!-- Hero -->
+<section class="min-h-screen flex items-center px-5 pt-28 pb-16">
+  <div class="hero-in mx-auto max-w-4xl text-center">
+    <div>
+      <span class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-extrabold" style="background:var(--green-c);color:var(--green)">
+        <span class="w-2 h-2 rounded-full" style="background:var(--green)"></span>
+        <span data-i18n="badge">New · v1.0 for Android</span>
+      </span>
+    </div>
+    <h1 class="mt-7 text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight leading-[1.04]">
+      <span data-i18n="h1_a">Type with</span><br><span data-i18n="h1_b" style="color:var(--primary)">pure bliss.</span>
+    </h1>
+    <p class="mt-7 text-lg sm:text-xl font-semibold max-w-2xl mx-auto" style="color:var(--muted)" data-i18n="hero_p">A Material You keyboard that fits your style — fast, friendly and beautifully yours.</p>
+    <div class="mt-10 flex flex-wrap gap-3 justify-center">
+      <a href="#download" class="btn btn-primary ripple pill px-9 py-4 text-base flex items-center gap-2.5">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>
+        <span data-i18n="btn_dl">Download for Android</span>
+      </a>
+      <a href="#features" class="btn btn-tonal ripple leaf px-9 py-4 text-base"><span data-i18n="btn_more">Explore features</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="px-5 py-20">
+  <div class="panel mx-auto max-w-6xl rounded-[48px] p-6 md:p-12">
+    <div class="text-center mb-12 reveal">
+      <h2 class="text-4xl md:text-5xl font-black tracking-tight"><span data-i18n="f_title">Why you'll love it</span></h2>
+      <p class="mt-4 font-semibold max-w-2xl mx-auto" style="color:var(--muted)" data-i18n="f_sub">Everything a great keyboard should be.</p>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5" id="featGrid"></div>
+  </div>
+</section>
+
+<!-- Download -->
+<section id="download" class="px-5 py-20">
+  <div class="mx-auto max-w-3xl reveal">
+    <div class="glass rounded-[48px] p-8 md:p-14 text-center">
+      <span class="cookie block w-28 h-28 mx-auto mb-5"><svg class="w-full h-full" viewBox="0 0 100 100"><use href="#bb-logo"/></svg></span>
+      <h2 class="text-4xl md:text-5xl font-black tracking-tight"><span data-i18n="d_title">Get Blissboard</span></h2>
+      <p class="mt-4 font-semibold max-w-lg mx-auto" style="color:var(--muted)" data-i18n="d_p">Free APK. Install, enable and start typing in under a minute.</p>
+      <a href="blissboard.apk" download class="btn btn-primary ripple pill inline-flex items-center gap-3 mt-9 px-11 py-5 text-lg">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>
+        <span data-i18n="d_btn">Download APK</span>
+      </a>
+      <p class="mt-6 text-sm font-bold" style="color:var(--green)" data-i18n="d_meta">Version 1.0.0 · 14.2 MB · Android 8.0+</p>
+      <p class="mt-2 text-xs font-semibold" style="color:var(--muted)" data-i18n="d_note">You may need to allow “Install unknown apps” in Android settings.</p>
+    </div>
+  </div>
+</section>
+<!-- Community & Links -->
+<section id="community" class="px-5 py-20">
+  <div class="mx-auto max-w-3xl">
+    <div class="glass reveal rounded-[48px] p-8 md:p-14 text-center">
+      <h2 class="text-4xl md:text-5xl font-black tracking-tight"><span data-i18n="c_title">Community &amp; Links</span></h2>
+      <p class="mt-4 font-semibold max-w-lg mx-auto" style="color:var(--muted)" data-i18n="c_sub">Chat with the team, share ideas and get updates first.</p>
+      <div class="mt-9 flex flex-wrap gap-4 justify-center">
+        <a href="https://slimchat.me/g/tomatocodeAI" target="_blank" rel="noopener noreferrer" class="btn btn-primary ripple pill inline-flex items-center gap-3 px-9 py-4 text-base outline-none focus:ring-0">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/></svg>
+          <span data-i18n="c_slim">Open SlimChat</span>
+        </a>
+        <a href="https://t.me/TomatocodeAI" target="_blank" rel="noopener noreferrer" class="btn btn-tonal ripple leaf inline-flex items-center gap-3 px-9 py-4 text-base outline-none focus:ring-0">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 3.5L2.8 10.7c-.8.3-.8 1.4 0 1.7l4.7 1.6 1.8 5.6c.2.7 1.1.9 1.6.4l2.6-2.4 4.7 3.5c.6.4 1.4.1 1.6-.6l3-15.7c.2-.9-.7-1.6-1.5-1.3z"/><path d="M7.5 14l10-7.5"/></svg>
+          <span data-i18n="c_tg">Join Telegram</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- Footer -->
+<footer id="footer" class="px-5 pb-10 pt-6">
+  <div class="glass reveal mx-auto max-w-6xl rounded-[40px] px-7 py-7 flex flex-col md:flex-row items-center justify-between gap-5 text-sm font-semibold" style="color:var(--muted)">
+    <div class="flex items-center gap-2.5 font-black" style="color:var(--text)">
+      <span class="cookie block w-10 h-10"><svg class="w-full h-full" viewBox="0 0 100 100"><use href="#bb-logo"/></svg></span> Blissboard
+    </div>
+    <div class="flex gap-3">
+      <a href="#" class="nav-link px-3 py-1.5 rounded-full"><span data-i18n="f_priv">Privacy</span></a>
+      <a href="#" class="nav-link px-3 py-1.5 rounded-full"><span data-i18n="f_terms">Terms</span></a>
+      <a href="#community" class="nav-link px-3 py-1.5 rounded-full"><span data-i18n="f_contact">Contact</span></a>
+    </div>
+    <div class="flex gap-3">
+      <a href="https://t.me/TomatocodeAI" target="_blank" rel="noopener noreferrer" aria-label="Telegram" class="btn btn-tonal round w-11 h-11 grid place-items-center text-xs outline-none focus:ring-0">TG</a>
+      <a href="https://slimchat.me/g/tomatocodeAI" target="_blank" rel="noopener noreferrer" aria-label="SlimChat" class="btn btn-tonal sq w-11 h-11 grid place-items-center text-xs outline-none focus:ring-0">SC</a>
+    </div>
+    <div>© 2026 Blissboard. <span data-i18n="f_rights">All rights reserved.</span></div>
+  </div>
+</footer>
+
+<script>
+/* ---------- Content ---------- */
+const FEATURES = [
+  {k:1, c:'ic-cyan',  n:8,  a:.09, i:'<circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="15.5" cy="10" r="1.2"/><path d="M12 21c-2 0-2-2-1-3s0-2-2-2"/>'},
+  {k:2, c:'ic-blue',  n:6,  a:.12, i:'<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>'},
+  {k:3, c:'ic-green', n:4,  a:.15, i:'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/>'},
+  {k:4, c:'ic-cyan',  n:12, a:.07, i:'<path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16.5 9a4 4 0 010 6"/>'},
+  {k:5, c:'ic-blue',  n:8,  a:.1,  i:'<rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V8a4 4 0 018 0v3"/>'},
+  {k:6, c:'ic-green', n:9,  a:.09, i:'<path d="M12 3c4 3 6 6 6 10a6 6 0 01-12 0c0-4 2-7 6-10z"/>'}
+];
+function cookiePoly(n,a){
+  const pts=[], N=120;
+  for(let i=0;i<N;i++){
+    const th=i/N*Math.PI*2, r=50*(1+a*Math.cos(n*th))/(1+a);
+    pts.push((50+r*Math.cos(th)).toFixed(2)+'% '+(50+r*Math.sin(th)).toFixed(2)+'%');
+  }
+  return 'polygon('+pts.join(',')+')';
+}
+const grid=document.getElementById('featGrid');
+FEATURES.forEach(f=>{
+  const el=document.createElement('article');
+  el.className='card reveal p-7';
+  el.innerHTML=`<div class="cookie ${f.c} w-16 h-16 grid place-items-center" data-cookie="${f.n},${f.a}">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">${f.i}</svg></div>
+    <h3 class="mt-5 text-2xl font-black leading-tight" data-i18n="f${f.k}_t"></h3>
+    <p class="mt-2 font-semibold" style="color:var(--muted)" data-i18n="f${f.k}_p"></p>`;
+  grid.appendChild(el);
+});
+document.querySelectorAll('[data-cookie]').forEach(el=>{
+  const [n,a]=el.dataset.cookie.split(',').map(Number);
+  el.style.clipPath=cookiePoly(n,a);
+});
+
+/* ---------- i18n with animated swap ---------- */
+const I18N = {
+  en: {
+    nav_features:'Features', nav_download:'Download', nav_contact:'Contact', cta_apk:'Download APK',
+    badge:'New · v1.0 for Android', h1_a:'Type with', h1_b:'pure bliss.',
+    hero_p:'A Material You keyboard that fits your style — fast, friendly and beautifully yours.',
+    btn_dl:'Download for Android', btn_more:'Explore features',
+    f_title:"Why you'll love it", f_sub:'Everything a great keyboard should be.',
+    f1_t:'Material You colours', f1_p:'Adapts to your wallpaper and system theme automatically.',
+    f2_t:'Lightning-fast typing', f2_p:'Zero-lag input, smart predictions and tunable haptic feedback.',
+    f3_t:'Custom layouts', f3_p:'QWERTY, AZERTY, Cyrillic and Kazakh — switch languages in one swipe.',
+    f4_t:'Satisfying sounds', f4_p:'Pick a sound pack that clicks just right — or go silent.',
+    f5_t:'Private by design', f5_p:'Everything stays on your device. No tracking, no cloud.',
+    f6_t:'Light & efficient', f6_p:'Only 14 MB and gentle on your battery.',
+    d_title:'Get Blissboard', d_p:'Free APK. Install, enable and start typing in under a minute.',
+    d_btn:'Download APK', d_meta:'Version 1.0.0 · 14.2 MB · Android 8.0+',
+    d_note:'You may need to allow “Install unknown apps” in Android settings.',
+    f_priv:'Privacy', f_terms:'Terms', f_contact:'Contact', f_rights:'All rights reserved.',
+    nav_community:'Community', c_title:'Community & Links', c_sub:'Chat with the team, share ideas and get updates first.',
+    c_slim:'Open SlimChat', c_tg:'Join Telegram'
+  },
+  ru: {
+    nav_features:'Возможности', nav_download:'Скачать', nav_contact:'Контакты', cta_apk:'Скачать APK',
+    badge:'Новинка · v1.0 для Android', h1_a:'Печатай в', h1_b:'чистом блаженстве.',
+    hero_p:'Клавиатура в стиле Material You, которая подстраивается под тебя — быстрая, дружелюбная и по-настоящему твоя.',
+    btn_dl:'Скачать для Android', btn_more:'Узнать больше',
+    f_title:'За что её полюбят', f_sub:'Всё, что должно быть в хорошей клавиатуре.',
+    f1_t:'Цвета Material You', f1_p:'Автоматически подстраивается под обои и тему системы.',
+    f2_t:'Молниеносный набор', f2_p:'Ввод без задержек, умные подсказки и настраиваемая вибро-отдача.',
+    f3_t:'Свои раскладки', f3_p:'QWERTY, AZERTY, кириллица и казахский — смена языка одним свайпом.',
+    f4_t:'Приятные звуки', f4_p:'Выбери звуковой пакет с идеальным щелчком — или отключи звук.',
+    f5_t:'Приватность по умолчанию', f5_p:'Всё остаётся на устройстве. Без слежки и облака.',
+    f6_t:'Лёгкая и экономная', f6_p:'Всего 14 МБ и бережный расход батареи.',
+    d_title:'Скачай Blissboard', d_p:'Бесплатный APK. Установи, включи и печатай уже через минуту.',
+    d_btn:'Скачать APK', d_meta:'Версия 1.0.0 · 14,2 МБ · Android 8.0+',
+    d_note:'Возможно, потребуется разрешить «Установку неизвестных приложений» в настройках Android.',
+    f_priv:'Конфиденциальность', f_terms:'Условия', f_contact:'Связаться', f_rights:'Все права защищены.',
+    nav_community:'Сообщество', c_title:'Сообщество и ссылки', c_sub:'Общайся с командой, делись идеями и узнавай новости первым.',
+    c_slim:'Открыть SlimChat', c_tg:'Вступить в Telegram'
+  },
+  kz: {
+    nav_features:'Мүмкіндіктер', nav_download:'Жүктеу', nav_contact:'Байланыс', cta_apk:'APK жүктеу',
+    badge:'Жаңа · Android үшін v1.0', h1_a:'Нағыз ләззатпен', h1_b:'теріп көр.',
+    hero_p:'Өз стиліңе бейімделетін Material You пернетақтасы — жылдам, жылы және толығымен сенікі.',
+    btn_dl:'Android үшін жүктеу', btn_more:'Мүмкіндіктерді көру',
+    f_title:'Неге ұнайды', f_sub:'Керемет пернетақтаға керек нәрсенің бәрі.',
+    f1_t:'Material You түстері', f1_p:'Тұсқағаз бен жүйе тақырыбына автоматты түрде бейімделеді.',
+    f2_t:'Найзағайдай жылдам теру', f2_p:'Кідіріссіз енгізу, ақылды болжамдар және реттелетін діріл.',
+    f3_t:'Жеке пернетақта үлгілері', f3_p:'QWERTY, AZERTY, кириллица және қазақ тілі — тілді бір сырғытумен ауыстыр.',
+    f4_t:'Ұнамды дыбыстар', f4_p:'Дәл келетін дыбыс пакетін таңда — немесе дыбысты өшір.',
+    f5_t:'Құпиялылық басты орында', f5_p:'Бәрі құрылғыңда қалады. Бақылау да, бұлт та жоқ.',
+    f6_t:'Жеңіл әрі үнемді', f6_p:'Бар болғаны 14 МБ және батареяны аяйды.',
+    d_title:'Blissboard жүктеп ал', d_p:'Тегін APK. Орнат, қос та, бір минутта теруді баста.',
+    d_btn:'APK жүктеу', d_meta:'Нұсқа 1.0.0 · 14,2 МБ · Android 8.0+',
+    d_note:'Android баптауларында «Белгісіз қолданбаларды орнатуға» рұқсат беру қажет болуы мүмкін.',
+    f_priv:'Құпиялылық', f_terms:'Шарттар', f_contact:'Байланыс', f_rights:'Барлық құқықтар қорғалған.',
+    nav_community:'Қауымдастық', c_title:'Қауымдастық және сілтемелер', c_sub:'Топпен сөйлес, идеяларыңмен бөліс және жаңалықты бірінші біл.',
+    c_slim:'SlimChat ашу', c_tg:'Telegram-ға қосылу'
+  }
+};
+let lang=null;
+function setLang(l, animate){
+  if(!I18N[l]) l='en';
+  if(l===lang) return;
+  const first=lang===null; lang=l;
+  document.documentElement.lang = l==='kz' ? 'kk' : l;
+  document.getElementById('langCur').textContent=l.toUpperCase();
+  document.querySelectorAll('.lang-opt').forEach(o=>o.setAttribute('aria-selected', o.dataset.lang===l));
+  const els=[...document.querySelectorAll('[data-i18n]')];
+  const apply=el=>{ const v=I18N[l][el.dataset.i18n]; if(v) el.textContent=v; };
+  if(first||!animate){ els.forEach(apply); }
+  else {
+    els.forEach((el,i)=>{ el.style.transitionDelay=Math.min(i*12,300)+'ms'; el.classList.add('i-out'); });
+    setTimeout(()=>{
+      els.forEach(apply);
+      requestAnimationFrame(()=>els.forEach(el=>el.classList.remove('i-out')));
+      setTimeout(()=>els.forEach(el=>el.style.transitionDelay=''),700);
+    },260);
+  }
+  try{ localStorage.setItem('bb-lang',l); }catch(e){}
+}
+const langBtn=document.getElementById('langBtn'), langMenu=document.getElementById('langMenu'), langArrow=document.getElementById('langArrow');
+function toggleMenu(open){
+  langMenu.classList.toggle('open',open);
+  langBtn.setAttribute('aria-expanded',open);
+  langArrow.style.transform=open?'rotate(180deg)':'';
+}
+langBtn.addEventListener('click',e=>{ e.stopPropagation(); toggleMenu(!langMenu.classList.contains('open')); });
+document.addEventListener('click',()=>toggleMenu(false));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') toggleMenu(false); });
+document.querySelectorAll('.lang-opt').forEach(o=>o.addEventListener('click',()=>setLang(o.dataset.lang,true)));
+(function(){
+  let l=''; try{ l=localStorage.getItem('bb-lang')||''; }catch(e){}
+  if(!l){ const n=(navigator.language||'en').slice(0,2).toLowerCase(); l=n==='ru'?'ru':(n==='kk'?'kz':'en'); }
+  setLang(l,false);
+})();
+
+/* ---------- Logo shape (12 scalloped lobes) + favicon ---------- */
+(function(){
+  const pts=[], N=360, R=49, depth=.075;
+  for(let i=0;i<N;i++){
+    const th=i/N*Math.PI*2, r=R*(1-depth+depth*Math.abs(Math.cos(6*th)));
+    pts.push((50+r*Math.cos(th-Math.PI/2)).toFixed(2)+' '+(50+r*Math.sin(th-Math.PI/2)).toFixed(2));
+  }
+  const d='M'+pts.join('L')+'Z';
+  document.getElementById('bbCookie').setAttribute('d',d);
+  const sym=document.getElementById('bb-logo').innerHTML;
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'+sym+'</svg>';
+  const link=document.createElement('link'); link.rel='icon'; link.type='image/svg+xml';
+  link.href='data:image/svg+xml,'+encodeURIComponent(svg);
+  document.head.appendChild(link);
+})();
+
+/* ---------- Ripple on buttons ---------- */
+document.querySelectorAll('.ripple').forEach(b=>{
+  b.addEventListener('pointerdown',e=>{
+    const r=b.getBoundingClientRect(), s=Math.max(r.width,r.height);
+    const d=document.createElement('span'); d.className='ripple-dot';
+    d.style.cssText=`width:${s}px;height:${s}px;left:${e.clientX-r.left-s/2}px;top:${e.clientY-r.top-s/2}px`;
+    b.appendChild(d); setTimeout(()=>d.remove(),850);
+  });
+});
+
+/* ---------- Scroll reveal ---------- */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){
+    const el=e.target; el.classList.add('in'); io.unobserve(el);
+    setTimeout(()=>{ el.style.transitionDelay=''; },1400); // keep hover transitions instant afterwards
+  }
+}),{threshold:.12, rootMargin:'0px 0px -6% 0px'});
+document.querySelectorAll('.reveal').forEach(el=>{
+  const idx=[...el.parentElement.children].indexOf(el);
+  el.style.transitionDelay=Math.min(idx,5)*90+'ms';
+  io.observe(el);
+});
+
+/* ---------- Focus / click fix: no outlines, no sticky focus shapes ---------- */
+document.querySelectorAll('a,button').forEach(el=>{
+  el.classList.add('outline-none','focus:ring-0');
+  el.addEventListener('pointerup',()=>{ if(el.id!=='langBtn') setTimeout(()=>el.blur(),0); });
+});
+
+/* ---------- Background: flat shapes drift independently and bounce apart (no merging) ---------- */
+(function(){
+  const bg=document.getElementById('bg'), NS='http://www.w3.org/2000/svg';
+  const lobe=(n,a)=>{ const pts=[],N=140,R=100/(1+a);
+    for(let i=0;i<N;i++){ const th=i/N*Math.PI*2, r=R*(1+a*Math.cos(n*th)); pts.push((r*Math.cos(th)).toFixed(1)+' '+(r*Math.sin(th)).toFixed(1)); }
+    return 'M'+pts.join('L')+'Z'; };
+  const COLORS=['#0e3a5f','#0b4a52','#1f4a3d','#123058','#0d4350','#1a3f55'];
+  const KINDS=[
+    {t:'lobe',n:8,a:.10,s:1.1},{t:'circle',s:.8},{t:'lobe',n:6,a:.12,s:.95},
+    {t:'squircle',s:.85},{t:'lobe',n:12,a:.07,s:.9},{t:'lobe',n:4,a:.16,s:.75},{t:'circle',s:1.0}
+  ];
+  let W=innerWidth,H=innerHeight,blobs=[];
+  function build(){
+    W=innerWidth; H=innerHeight; bg.innerHTML=''; blobs=[];
+    const base=Math.min(W,H), small=W<640;
+    KINDS.forEach((k,i)=>{
+      const r=base*(small?.16:.12)*k.s;
+      const svg=document.createElementNS(NS,'svg');
+      svg.setAttribute('width',r*2); svg.setAttribute('height',r*2); svg.setAttribute('viewBox','-100 -100 200 200');
+      let el;
+      if(k.t==='lobe'){ el=document.createElementNS(NS,'path'); el.setAttribute('d',lobe(k.n,k.a)); }
+      else if(k.t==='circle'){ el=document.createElementNS(NS,'circle'); el.setAttribute('r',98); }
+      else { el=document.createElementNS(NS,'rect'); el.setAttribute('x',-94); el.setAttribute('y',-94); el.setAttribute('width',188); el.setAttribute('height',188); el.setAttribute('rx',62); }
+      el.setAttribute('fill',COLORS[i%COLORS.length]); svg.appendChild(el); bg.appendChild(svg);
+      const ang=Math.random()*Math.PI*2, sp=.25+Math.random()*.3;
+      // place without overlap
+      let x,y,tries=0;
+      do{ x=r+Math.random()*(W-2*r); y=r+Math.random()*(H-2*r); tries++; }
+      while(tries<60 && blobs.some(b=>Math.hypot(b.x-x,b.y-y)<(b.r+r)*1.15));
+      blobs.push({el:svg,r,x,y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,sp,rot:Math.random()*360,vr:(Math.random()-.5)*.25,spin:k.t!=='circle'});
+    });
+  }
+  let last=performance.now();
+  function tick(now){
+    const dt=Math.min(2.5,(now-last)/16.67); last=now;
+    for(const a of blobs){
+      a.x+=a.vx*dt; a.y+=a.vy*dt; a.rot+=a.vr*dt;
+      if(a.x<a.r){a.x=a.r;a.vx=Math.abs(a.vx);} if(a.x>W-a.r){a.x=W-a.r;a.vx=-Math.abs(a.vx);}
+      if(a.y<a.r){a.y=a.r;a.vy=Math.abs(a.vy);} if(a.y>H-a.r){a.y=H-a.r;a.vy=-Math.abs(a.vy);}
+    }
+    // elastic collisions keep shapes strictly apart
+    for(let i=0;i<blobs.length;i++) for(let j=i+1;j<blobs.length;j++){
+      const a=blobs[i],b=blobs[j]; let dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||.001, min=(a.r+b.r)*1.08;
+      if(d<min){
+        dx/=d; dy/=d; const push=(min-d)/2;
+        a.x-=dx*push; a.y-=dy*push; b.x+=dx*push; b.y+=dy*push;
+        const rel=(b.vx-a.vx)*dx+(b.vy-a.vy)*dy;
+        if(rel<0){ a.vx+=rel*dx; a.vy+=rel*dy; b.vx-=rel*dx; b.vy-=rel*dy; }
+      }
+    }
+    for(const a of blobs) a.el.style.transform=`translate(${a.x-a.r}px,${a.y-a.r}px) rotate(${a.spin?a.rot:0}deg)`;
+    requestAnimationFrame(tick);
+  }
+  build(); requestAnimationFrame(tick);
+  let rt; addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(build,250); });
+})();
+</script>
+</body>
