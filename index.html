@@ -109,10 +109,10 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Nunito','sans-serif
 
 <!-- Header -->
 <header style="position:fixed" class="top-3 inset-x-3 z-50">
-  <div class="surface mx-auto max-w-6xl rounded-full pl-3 pr-2 py-2 flex items-center justify-between gap-2">
+  <div class="surface mx-auto max-w-6xl rounded-full pl-2.5 pr-2 py-2 flex items-center justify-between gap-1.5 sm:gap-2">
     <a href="#top" class="flex items-center gap-2.5 font-black text-lg tracking-tight">
       <span class="cookie block w-11 h-11"><svg class="w-full h-full" viewBox="0 0 100 100"><use href="#bb-logo"/></svg></span>
-      Blissboard
+      <span class="hidden min-[430px]:inline">Blissboard</span>
     </a>
     <nav class="hidden md:flex items-center gap-1 text-sm font-bold" style="color:var(--muted)">
       <a href="#features" class="nav-link px-4 py-2 rounded-full"><span data-i18n="nav_features">Features</span></a>
@@ -121,7 +121,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Nunito','sans-serif
     </nav>
     <div class="flex items-center gap-2">
       <div class="relative">
-        <button id="langBtn" class="btn btn-tonal pill flex items-center gap-1.5 px-4 py-2.5 text-sm" aria-haspopup="listbox" aria-expanded="false">
+        <button id="langBtn" class="btn btn-tonal pill flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-sm" aria-haspopup="listbox" aria-expanded="false">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg>
           <span id="langCur">EN</span>
           <svg id="langArrow" style="transition:transform .5s var(--spring)" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -132,7 +132,7 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ['Nunito','sans-serif
           <li role="option" data-lang="kz" class="lang-opt flex justify-between items-center px-4 py-3 rounded-[20px] cursor-pointer text-sm font-bold">Қазақша <b>KZ</b></li>
         </ul>
       </div>
-      <a href="#download" class="btn btn-primary ripple pill px-5 py-2.5 text-sm whitespace-nowrap"><span data-i18n="cta_apk">Download APK</span></a>
+      <a href="#download" class="btn btn-primary ripple pill shrink-0 px-4 sm:px-5 py-2.5 text-sm whitespace-nowrap"><span data-i18n="cta_apk">Download APK</span></a>
     </div>
   </div>
 </header>
